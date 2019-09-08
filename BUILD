@@ -8,3 +8,10 @@ cc_library(
     visibility = ["//visibility:public"]
 )
 
+cc_binary(
+    name = "zmq_raw",
+    srcs = ["src/zmq_raw.cpp"],
+    deps = ["@system_libs//:zmq"],
+    linkopts = ["-pthread"]
+)
+
