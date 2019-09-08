@@ -76,6 +76,11 @@ TEST(ZMQ, send_and_receive)
   EXPECT_EQ(source_value, target_value);
 }
 
+TEST(ZMQ, no_comm_with_different_topics)
+{
+  EXPECT_FALSE(true);
+}
+
 int main(int argc, char **argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
