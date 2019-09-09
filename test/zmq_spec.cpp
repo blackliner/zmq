@@ -5,6 +5,11 @@
 
 #include "zmq_pub_sub.h"
 
+class FixtureZMQ : public ::testing::Test
+{
+protected:
+};
+
 const std::string topic{"TEST"};
 
 TEST(ZMQ_publisher, instanciate_with_topic)
@@ -14,18 +19,9 @@ TEST(ZMQ_publisher, instanciate_with_topic)
   EXPECT_TRUE(true);
 }
 
-TEST(ZMQ_publisher, bind)
-{
-  PublisherT<int> publisher{topic};
-
-  EXPECT_NO_THROW(publisher.bind());
-}
-
 TEST(ZMQ_publisher, publish)
 {
   PublisherT<int> publisher{topic};
-
-  EXPECT_NO_THROW(publisher.bind());
 
   EXPECT_TRUE(publisher.publish(0));
 }
@@ -37,18 +33,9 @@ TEST(ZMQ_subscriber, instanciate_with_topic)
   EXPECT_TRUE(true);
 }
 
-TEST(ZMQ_subscriber, connect)
-{
-  SubscriberT<int> subscriber{topic};
-
-  EXPECT_NO_THROW(subscriber.connect());
-}
-
 TEST(ZMQ_subscriber, receive)
 {
   SubscriberT<int> subscriber{topic};
-
-  EXPECT_NO_THROW(subscriber.connect());
 
   EXPECT_NO_THROW(subscriber.receive());
 }
@@ -56,24 +43,48 @@ TEST(ZMQ_subscriber, receive)
 TEST(ZMQ, send_and_receive)
 {
   PublisherT<int> publisher{topic};
-  publisher.bind();
-
   SubscriberT<int> subscriber{topic};
-  subscriber.connect();
-
-  //usleep(10000);
 
   const int source_value{10};
-  int target_value{};
+  const int num_of_iter{10000};
+  int num_of_pubs{};
 
-  while (target_value != source_value)
+  usleep(10);
+
+  for (int i{}; i < num_of_iter; ++i)
   {
-    publisher.publish(source_value);
-
-    target_value = subscriber.receive();
+    if (publisher.publish(source_value))
+    {
+      ++num_of_pubs;
+    }
   }
 
-  EXPECT_EQ(source_value, target_value);
+  //usleep(100000);
+
+  int num_of_subs{};
+  int num_of_correct_subs{};
+  int receive_count{num_of_iter};
+  while (receive_count > 0)
+  {
+    auto value = subscriber.receive();
+
+    if (value)
+    {
+      ++num_of_subs;
+      if (*value == source_value)
+      {
+        ++num_of_correct_subs;
+      }
+    }
+    else
+    {
+      --receive_count;
+    }
+  }
+
+  EXPECT_EQ(num_of_iter, num_of_pubs);
+  EXPECT_EQ(num_of_iter, num_of_subs);
+  EXPECT_EQ(num_of_iter, num_of_correct_subs);
 }
 
 TEST(ZMQ, no_comm_with_different_topics)
