@@ -1,6 +1,7 @@
 #bazel test ... --test_output=all
 
 bazel coverage \
+--test_output=all \
 --instrument_test_targets \
 --combined_report=lcov \
 --coverage_report_generator=@bazel_tools//tools/test/CoverageOutputGenerator/java/com/google/devtools/coverageoutputgenerator:Main \
