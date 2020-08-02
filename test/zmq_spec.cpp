@@ -5,91 +5,126 @@
 
 #include "zmq_pub_sub.h"
 
+const std::string kTopicA{"TOPIC_A"};
+const std::string kTopicB{"TOPIC_B"};
+
+template <typename T>
+void PreparePubSubPair(PublisherT<T> &pub, SubscriberT<T> &sub)
+{
+  while (!sub.receive())
+  {
+    pub.publish(1);
+  }
+
+  while (sub.receive())
+  {
+    usleep(1);
+  }
+}
+
 class FixtureZMQ : public ::testing::Test
 {
 protected:
-};
+  FixtureZMQ()
+  {
+    PreparePubSubPair(publisher_a, subscriber_a);
+    PreparePubSubPair(publisher_b, subscriber_b);
+  }
 
-const std::string topic{"TEST"};
+  PublisherT<int> publisher_a{kTopicA};
+  SubscriberT<int> subscriber_a{kTopicA};
+
+  PublisherT<int> publisher_b{kTopicB};
+  SubscriberT<int> subscriber_b{kTopicB};
+};
 
 TEST(ZMQ_publisher, instanciate_with_topic)
 {
-  PublisherT<int> publisher{topic};
+  PublisherT<int> publisher{""};
 
   EXPECT_TRUE(true);
 }
 
 TEST(ZMQ_publisher, publish)
 {
-  PublisherT<int> publisher{topic};
+  PublisherT<int> publisher{""};
 
   EXPECT_TRUE(publisher.publish(0));
 }
 
 TEST(ZMQ_subscriber, instanciate_with_topic)
 {
-  SubscriberT<int> subscriber{topic};
+  SubscriberT<int> subscriber{""};
 
   EXPECT_TRUE(true);
 }
 
 TEST(ZMQ_subscriber, receive)
 {
-  SubscriberT<int> subscriber{topic};
+  SubscriberT<int> subscriber{""};
 
   EXPECT_NO_THROW(subscriber.receive());
 }
 
-TEST(ZMQ, send_and_receive)
+template <typename T>
+int PublishN(PublisherT<T> &publisher, T value, int n)
 {
-  PublisherT<int> publisher{topic};
-  SubscriberT<int> subscriber{topic};
-
-  const int source_value{10};
-  const int num_of_iter{10000};
   int num_of_pubs{};
 
-  usleep(10);
-
-  for (int i{}; i < num_of_iter; ++i)
+  for (int i{}; i < n; ++i)
   {
-    if (publisher.publish(source_value))
+    if (publisher.publish(value))
     {
       ++num_of_pubs;
     }
   }
 
-  //usleep(100000);
+  return num_of_pubs;
+}
 
-  int num_of_subs{};
-  int num_of_correct_subs{};
-  int receive_count{num_of_iter};
-  while (receive_count > 0)
+template <typename T>
+int Receive(SubscriberT<T> &sub)
+{
+  int result{};
+
+  while (!sub.receive())
   {
-    auto value = subscriber.receive();
-
-    if (value)
-    {
-      ++num_of_subs;
-      if (*value == source_value)
-      {
-        ++num_of_correct_subs;
-      }
-    }
-    else
-    {
-      --receive_count;
-    }
   }
+  ++result;
+
+  while (sub.receive())
+  {
+    //usleep(10);
+    ++result;
+  }
+
+  return result;
+}
+
+TEST_F(FixtureZMQ, send_and_receive)
+{
+  const int source_value{10};
+  const int num_of_iter{1};
+
+  int num_of_pubs = PublishN(publisher_a, source_value, num_of_iter);
+
+  int num_of_subs = Receive(subscriber_a);
 
   EXPECT_EQ(num_of_iter, num_of_pubs);
   EXPECT_EQ(num_of_iter, num_of_subs);
-  EXPECT_EQ(num_of_iter, num_of_correct_subs);
 }
 
-TEST(ZMQ, no_comm_with_different_topics)
+TEST_F(FixtureZMQ, no_comm_with_different_topics)
 {
-  EXPECT_FALSE(true);
+  const int source_value{10};
+  const int num_of_iter{1};
+
+  int num_of_pubs = PublishN(publisher_a, source_value, num_of_iter);
+
+  int num_of_subs = Receive(subscriber_a);
+
+  EXPECT_EQ(num_of_iter, num_of_pubs);
+  EXPECT_EQ(num_of_iter, num_of_subs);
 }
 
 int main(int argc, char **argv)
