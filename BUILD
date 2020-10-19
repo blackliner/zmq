@@ -4,13 +4,20 @@ cc_library(
     name = "zmq_pub_sub",
     srcs = ["src/zmq_pub_sub.cpp"],
     hdrs = ["public/zmq_pub_sub.h"],
+    includes = ["public"],
+    visibility = ["//visibility:public"],
     deps = ["@cppzmq"],
-    visibility = ["//visibility:public"]
 )
 
 cc_binary(
     name = "zmq_raw",
     srcs = ["src/zmq_raw.cpp"],
+    deps = ["@cppzmq"],
+)
+
+cc_binary(
+    name = "zmq_monitor",
+    srcs = ["src/zmq_monitor.cpp"],
     deps = ["@cppzmq"],
 )
 
@@ -24,7 +31,6 @@ cmake_external(
         "ninja",
         "ninja install",
     ],
-    out_include_dir = "include/libzmq",
     shared_libraries = [
         "libzmq.so",
     ],

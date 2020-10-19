@@ -1,13 +1,17 @@
-
-
 cc_test(
     name = "zmq_spec",
     srcs = ["zmq_spec.cpp"],
-    copts = ["-Iexternal/gtest/include",
-             "-Ipublic"],
     deps = [
-        "@gtest_http_archive//:gtest",
         "//:zmq_pub_sub",
+        "@gtest_http_archive//:gtest",
     ],
-    visibility = ["//visibility:public"]
+)
+
+cc_test(
+    name = "zmq_blocking_close_spec",
+    srcs = ["zmq_blocking_close_spec.cpp"],
+    deps = [
+        "@cppzmq",
+        "@gtest_http_archive//:gtest",
+    ],
 )
